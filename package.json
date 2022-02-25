@@ -1,0 +1,24 @@
+{
+  "name": "@david.uhlir/config",
+  "version": "1.0.0",
+  "description": "Configuration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf ./dist && tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daviduhlir/config.git"
+  },
+  "author": "David Uhlíř",
+  "license": "ISC",
+  "dependencies": {
+    "@types/npm": "^2.0.29",
+    "rimraf": "^2.6.2",
+    "typescript": "^3.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^13.11.1"
+  }
+}
