@@ -9,6 +9,24 @@ import {
 } from '../utils/JsonValidator';
 import { mergeDeep } from '../utils/object'
 import { getByExpression, setByExpression } from '../utils/expression';
+import * as yaml from 'js-yaml';
+import * as fs from 'fs';
+
+/**
+ * Configuration schema error
+ */
+ export class ConfigurationError extends Error {
+    constructor(message: string) {
+        super(message);
+
+        const actualProto = new.target.prototype;
+        if (Object.setPrototypeOf) {
+            Object.setPrototypeOf(this, actualProto);
+        } else {
+            (this as any).__proto__ = actualProto;
+        }
+    }
+}
 
 /**
  * Configuration schema error
@@ -48,9 +66,13 @@ export class Configuration<T extends JsonValidatorObjectChildsSchema> {
         const instance = new Configuration<T>(schema);
 
         const sources = await Promise.all(filepaths.map(async path => {
-            // TODO load file by path and parse as yml
-            return null;
-        }))
+            // Get document, or throw exception on error
+            try {
+                return yaml.load(fs.readFileSync(path, 'utf8'));
+            } catch (e) {
+                throw new ConfigurationError(`Loading configuration from file ${path} failed with error: ${e.message}`);
+            }
+        }));
 
         instance.load(...sources);
         instance.validate();
