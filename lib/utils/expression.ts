@@ -1,3 +1,4 @@
+import { flatten } from './array';
 import { safe } from './safe';
 import { replaceAll } from './string';
 
@@ -6,10 +7,11 @@ import { replaceAll } from './string';
  * @param exp
  */
 function prepareExpression(exp: string): string {
+    const cleanExp = replaceAll(exp, '\\?\\.', '');
     const reg = /(\[\'([^\[\]\"]+)\'\]|\[\"([^\[\]\"]+)\"\]|\[([^\.\[\]\"]+)\]|([^\.\[\]\"]+))/g;
     const out = [];
     let match = null;
-    while ((match = reg.exec(exp)) !== null) {
+    while ((match = reg.exec(cleanExp)) !== null) {
         for (let i = 5; i > 0; i--) {
             if (match[i]) {
                 out.push(match[i]);
@@ -57,12 +59,34 @@ function addMissings(object: any, exp: string) {
  * @param exp
  */
 export function getByExpression(object: any, exp: string) {
-    const preparedExp = prepareExpression(exp);
-    // tslint:disable-next-line:prefer-const
-    let i: any = undefined;
-    // tslint:disable-next-line:no-eval
-    safe(() => eval('i = object' + preparedExp), undefined);
-    return i;
+    const arrayParts = exp.split('[]');
+
+    if (arrayParts.length === 1) {
+        const preparedExp = prepareExpression(exp);
+        // tslint:disable-next-line:prefer-const
+        let i: any = undefined;
+        // tslint:disable-next-line:no-eval
+        safe(() => eval('i = object' + preparedExp), undefined);
+        return i;
+    } else {
+        return flatten(getArrayResultbyExpression(object, arrayParts));
+    }
+}
+
+/**
+ * Get all posible variants by empty []
+ * @param object
+ * @param exps
+ * @returns
+ */
+export function getArrayResultbyExpression(object: any, exps: string[]) {
+    if (exps.length === 1) {
+        return getByExpression(object, exps[0]);
+    }
+
+    const preparedExp = prepareExpression(exps[0]);
+    return getByExpression(object, preparedExp)
+        .map((value) => getArrayResultbyExpression(value, exps.slice(1)))
 }
 
 /**

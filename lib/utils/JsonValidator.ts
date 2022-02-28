@@ -27,6 +27,7 @@ export interface JsonValidatorFieldErrorDetail {
     message: string;
     isOnKey?: boolean;
     humanKeyName?: string;
+    fieldDescription?: string;
 }
 
 export class JsonValidationFieldError extends JsonValidationError {
@@ -98,6 +99,7 @@ export enum JsonValidatorType {
     Boolean = 'Boolean',
     Number = 'Number',
     String = 'String',
+    Password = 'Password',
     Enum = 'Enum',
     Array = 'Array',
     Object = 'Object',
@@ -106,6 +108,7 @@ export enum JsonValidatorType {
 export interface TypeOfJsonValidatorType<OF = any> {
     [JsonValidatorType.Any]: any;
     [JsonValidatorType.String]: string;
+    [JsonValidatorType.Password]: string;
     [JsonValidatorType.Array]: OF[];
     [JsonValidatorType.Boolean]: boolean;
     [JsonValidatorType.Enum]: string;
@@ -155,6 +158,11 @@ export interface JsonValidatorCommonSchema<T> {
      * Transform output data (after validation)
      */
     outputTransform?: JsonValidatorTransformFunction<any>;
+
+    /**
+     * Some description of field
+     */
+    description?: string;
 }
 
 export interface JsonValidatorClampLengthSchema {
@@ -196,6 +204,22 @@ export interface JsonValidatorBooleanSchema extends
 
 // string
 export interface JsonValidatorStringSchema extends
+    JsonValidatorCommonSchema<JsonValidatorType.String>,
+    JsonValidatorClampLengthSchema
+{
+    /**
+     * RegExp for validate string (valid only for String)
+     */
+    regexp?: JsonRegExpValidation;
+
+    /**
+     * Try parse as new Date() (valid only for String)
+     */
+    asDate?: boolean;
+}
+
+// password
+export interface JsonValidatorPasswordSchema extends
     JsonValidatorCommonSchema<JsonValidatorType.String>,
     JsonValidatorClampLengthSchema
 {
@@ -401,6 +425,7 @@ export class JsonValidator {
             [JsonValidatorType.Any]: JsonValidator.validateAny,
             [JsonValidatorType.Boolean]: JsonValidator.validateBoolean,
             [JsonValidatorType.String]: JsonValidator.validateString,
+            [JsonValidatorType.Password]: JsonValidator.validatePassword,
             [JsonValidatorType.Number]: JsonValidator.validateNumber,
             [JsonValidatorType.Enum]: JsonValidator.validateEnum,
             [JsonValidatorType.Array]: JsonValidator.validateArray,
@@ -458,6 +483,7 @@ export class JsonValidator {
             field: `${parentKey}${key}`,
             message: `Must be boolean`,
             humanKeyName: schema.humanKeyName,
+            fieldDescription: schema.description,
         }]);
     }
 
@@ -482,6 +508,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message: `Minimal length is ${schema.minLength}`,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             }
@@ -492,6 +519,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message: `Maximal length is ${schema.maxLength}`,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             }
@@ -517,10 +545,11 @@ export class JsonValidator {
                                 field: `${parentKey}${key}`,
                                 message: `Invalid date value`,
                                 humanKeyName: schema.humanKeyName,
+                                fieldDescription: schema.description,
                             }]);
                         }
                         return date;
-                    } else {
+                    } else {
                         return content;
                     }
                 } else {
@@ -529,6 +558,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             } else { // equal match
@@ -540,10 +570,11 @@ export class JsonValidator {
                             field: `${parentKey}${key}`,
                             message: `Invalid date value`,
                             humanKeyName: schema.humanKeyName,
+                            fieldDescription: schema.description,
                         }]);
                     }
                     return date;
-                } else {
+                } else {
                     return content;
                 }
             }
@@ -552,7 +583,24 @@ export class JsonValidator {
             field: `${parentKey}${key}`,
             message: `Must be string`,
             humanKeyName: schema.humanKeyName,
+            fieldDescription: schema.description,
         }]);
+    }
+
+    /**
+     * Password type validator
+     * @param parentKey
+     * @param key
+     * @param content
+     * @param schema
+     */
+     protected static validatePassword(
+        parentKey: string,
+        key: string,
+        content: any,
+        schema: JsonValidatorPasswordSchema,
+    ) : any {
+        return JsonValidator.validateString(parentKey, key, content, schema);
     }
 
     /**
@@ -568,7 +616,7 @@ export class JsonValidator {
         content: any,
         schema: JsonValidatorNumberSchema,
     ): any {
-        if (isNumber(content) && !isNaN(content)) {
+        if (isNumber(content) && !isNaN(content)) {
             // check min value
             if (!isUndefined(schema.min)) {
                 if (content < schema.min) {
@@ -576,6 +624,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message: `Minimal value is ${schema.min}`,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             }
@@ -586,6 +635,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message: `Maximal value is ${schema.max}`,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             }
@@ -594,6 +644,7 @@ export class JsonValidator {
                     field: `${parentKey}${key}`,
                     message: `Must be integer, not float`,
                     humanKeyName: schema.humanKeyName,
+                    fieldDescription: schema.description,
                 }]);
             }
             return content;
@@ -602,6 +653,7 @@ export class JsonValidator {
             field: `${parentKey}${key}`,
             message: `Must be number`,
             humanKeyName: schema.humanKeyName,
+            fieldDescription: schema.description,
         }]);
     }
 
@@ -621,13 +673,14 @@ export class JsonValidator {
         if (!isArray(schema.enum)) {
             throw new Error(`Missing 'enum' field in '${parentKey}${key}' format`);
         }
-        if (isString(content) && (schema.enum.indexOf(content) > -1)) {
+        if (isString(content) && (schema.enum.indexOf(content) > -1)) {
             return content;
         }
         throw new JsonValidationFieldError([{
             field: `${parentKey}${key}`,
             message: `Must be one of following values [${schema.enum}]`,
             humanKeyName: schema.humanKeyName,
+            fieldDescription: schema.description,
         }]);
     }
 
@@ -656,6 +709,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message: `Must have minimal length of ${schema.minLength} items`,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             }
@@ -666,6 +720,7 @@ export class JsonValidator {
                         field: `${parentKey}${key}`,
                         message: `Must have maximal length of ${schema.maxLength} items`,
                         humanKeyName: schema.humanKeyName,
+                        fieldDescription: schema.description,
                     }]);
                 }
             }
@@ -708,6 +763,7 @@ export class JsonValidator {
             field: `${parentKey}${key}`,
             message: `Must be array`,
             humanKeyName: schema.humanKeyName,
+            fieldDescription: schema.description,
         }]);
     }
 
@@ -724,7 +780,7 @@ export class JsonValidator {
         content: any,
         schema: JsonValidatorObjectSchema,
     ) {
-        if ((!schema.childs || !isObject(schema.childs)) && (!schema.of)) {
+        if ((!schema.childs || !isObject(schema.childs)) && (!schema.of)) {
             throw new Error(`Missing 'childs' or 'of' field in '${parentKey}${key}' format`);
         }
         if (isObject(content) && !isArray(content)) {
@@ -736,7 +792,7 @@ export class JsonValidator {
             objKeys.forEach((objKey) => {
                 try {
                     let newParentKey = `${parentKey}${key}.`;
-                    if (newParentKey === '.') {
+                    if (newParentKey === '.') {
                         newParentKey = '';
                     }
 
@@ -756,6 +812,7 @@ export class JsonValidator {
                                 field: `${parentKey}${key}.${objKey}`,
                                 isOnKey: true,
                                 message,
+                                fieldDescription: schema.description,
                             }]);
                         }
                     }
@@ -768,12 +825,13 @@ export class JsonValidator {
                             newParentKey,
                             objKey,
                         );
-                    } else if (schema.childs && schema.childs[objKey].required === JsonValidatorRequired.True) {
+                    } else if (schema.childs && schema.childs[objKey].required === JsonValidatorRequired.True) {
                         // was undefined, and is required
                         throw new JsonValidationFieldError([{
                             field: `${newParentKey}${objKey}`,
                             message: `Missing required field`,
                             humanKeyName: schema.humanKeyName,
+                            fieldDescription: schema.description,
                         }]);
                     }
                 } catch (e) {
@@ -804,6 +862,7 @@ export class JsonValidator {
                             field: `${parentKey}${key}.${additionalKey}`,
                             message: `Additional keys is not allowed`,
                             humanKeyName: schema.humanKeyName,
+                            fieldDescription: schema.description,
                         })),
                     );
                 }
@@ -818,6 +877,71 @@ export class JsonValidator {
             field: `${parentKey}${key}`,
             message: `Must be object`,
             humanKeyName: schema.humanKeyName,
+            fieldDescription: schema.description,
         }]);
+    }
+}
+
+/**********************
+ *
+ * Json validator utils
+ *
+ **********************/
+export class JsonValidatorUtils {
+    /**
+     * Get all posible keys until finalType is reached in every branches of schema.
+     * @param schema
+     * @param finalTypes
+     * @returns
+     */
+    public static getAllKeys(
+        schema: JsonValidatorSchema,
+        finalTypes: JsonValidatorType[] = [
+            JsonValidatorType.Any,
+            JsonValidatorType.Boolean,
+            JsonValidatorType.Number,
+            JsonValidatorType.String,
+            JsonValidatorType.Enum,
+        ],
+    ): {[key: string]: JsonValidatorSchema} {
+        return JsonValidatorUtils.internalGetAllKeys(schema, finalTypes);
+    }
+
+    /**
+     * Internal recursion to get all keys from schema
+     * @param schema
+     * @param finalTypes
+     * @param acc
+     * @param prefix
+     * @returns
+     */
+    protected static internalGetAllKeys(
+        schema: JsonValidatorSchema,
+        finalTypes: JsonValidatorType[],
+        acc: {[key: string]: JsonValidatorSchema} = {},
+        prefix: string = '',
+    ): {[key: string]: JsonValidatorSchema} {
+        if (finalTypes.includes(schema.type)) {
+            acc[prefix] = schema;
+            return acc;
+        } else if (schema.type === JsonValidatorType.Object) {
+            const keys = Object.keys(schema.childs);
+            keys.forEach(key => JsonValidatorUtils.internalGetAllKeys(
+                schema.childs[key],
+                finalTypes,
+                acc,
+                `${prefix ? prefix + '.' : ''}${schema.childs[key].required !== JsonValidatorRequired.True ? '?' : ''}${key}`,
+            ));
+            return acc;
+        } else if (schema.type === JsonValidatorType.Array) {
+            JsonValidatorUtils.internalGetAllKeys(
+                schema.of,
+                finalTypes,
+                acc,
+                `${prefix}[]`,
+            );
+            return acc;
+        }
+        return acc;
     }
 }

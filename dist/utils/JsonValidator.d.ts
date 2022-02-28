@@ -8,6 +8,7 @@ export interface JsonValidatorFieldErrorDetail {
     message: string;
     isOnKey?: boolean;
     humanKeyName?: string;
+    fieldDescription?: string;
 }
 export declare class JsonValidationFieldError extends JsonValidationError {
     readonly details: JsonValidatorFieldErrorDetail[];
@@ -24,6 +25,7 @@ export declare enum JsonValidatorType {
     Boolean = "Boolean",
     Number = "Number",
     String = "String",
+    Password = "Password",
     Enum = "Enum",
     Array = "Array",
     Object = "Object"
@@ -31,6 +33,7 @@ export declare enum JsonValidatorType {
 export interface TypeOfJsonValidatorType<OF = any> {
     [JsonValidatorType.Any]: any;
     [JsonValidatorType.String]: string;
+    [JsonValidatorType.Password]: string;
     [JsonValidatorType.Array]: OF[];
     [JsonValidatorType.Boolean]: boolean;
     [JsonValidatorType.Enum]: string;
@@ -51,6 +54,7 @@ export interface JsonValidatorCommonSchema<T> {
     humanKeyName?: string;
     parseTransform?: JsonValidatorTransformFunction<any>;
     outputTransform?: JsonValidatorTransformFunction<any>;
+    description?: string;
 }
 export interface JsonValidatorClampLengthSchema {
     minLength?: number;
@@ -72,6 +76,10 @@ export interface JsonValidatorAnySchema extends JsonValidatorCommonSchema<JsonVa
 export interface JsonValidatorBooleanSchema extends JsonValidatorCommonSchema<JsonValidatorType.Boolean> {
 }
 export interface JsonValidatorStringSchema extends JsonValidatorCommonSchema<JsonValidatorType.String>, JsonValidatorClampLengthSchema {
+    regexp?: JsonRegExpValidation;
+    asDate?: boolean;
+}
+export interface JsonValidatorPasswordSchema extends JsonValidatorCommonSchema<JsonValidatorType.String>, JsonValidatorClampLengthSchema {
     regexp?: JsonRegExpValidation;
     asDate?: boolean;
 }
@@ -124,8 +132,19 @@ export declare class JsonValidator {
     protected static validateAny(parentKey: string, key: string, content: any, schema: JsonValidatorAnySchema): any;
     protected static validateBoolean(parentKey: string, key: string, content: any, schema: JsonValidatorBooleanSchema): any;
     protected static validateString(parentKey: string, key: string, content: any, schema: JsonValidatorStringSchema): any;
+    protected static validatePassword(parentKey: string, key: string, content: any, schema: JsonValidatorPasswordSchema): any;
     protected static validateNumber(parentKey: string, key: string, content: any, schema: JsonValidatorNumberSchema): any;
     protected static validateEnum(parentKey: string, key: string, content: any, schema: JsonValidatorEnumSchema): any;
     protected static validateArray(parentKey: string, key: string, content: any, schema: JsonValidatorArraySchema): any;
     protected static validateObject(parentKey: string, key: string, content: any, schema: JsonValidatorObjectSchema): {};
+}
+export declare class JsonValidatorUtils {
+    static getAllKeys(schema: JsonValidatorSchema, finalTypes?: JsonValidatorType[]): {
+        [key: string]: JsonValidatorSchema;
+    };
+    protected static internalGetAllKeys(schema: JsonValidatorSchema, finalTypes: JsonValidatorType[], acc?: {
+        [key: string]: JsonValidatorSchema;
+    }, prefix?: string): {
+        [key: string]: JsonValidatorSchema;
+    };
 }

@@ -1,13 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFirstProperty = exports.setByExpression = exports.getByExpression = void 0;
+exports.getFirstProperty = exports.setByExpression = exports.getArrayResultbyExpression = exports.getByExpression = void 0;
+const array_1 = require("./array");
 const safe_1 = require("./safe");
 const string_1 = require("./string");
 function prepareExpression(exp) {
+    const cleanExp = string_1.replaceAll(exp, '\\?\\.', '');
     const reg = /(\[\'([^\[\]\"]+)\'\]|\[\"([^\[\]\"]+)\"\]|\[([^\.\[\]\"]+)\]|([^\.\[\]\"]+))/g;
     const out = [];
     let match = null;
-    while ((match = reg.exec(exp)) !== null) {
+    while ((match = reg.exec(cleanExp)) !== null) {
         for (let i = 5; i > 0; i--) {
             if (match[i]) {
                 out.push(match[i]);
@@ -43,12 +45,27 @@ function addMissings(object, exp) {
     }
 }
 function getByExpression(object, exp) {
-    const preparedExp = prepareExpression(exp);
-    let i = undefined;
-    safe_1.safe(() => eval('i = object' + preparedExp), undefined);
-    return i;
+    const arrayParts = exp.split('[]');
+    if (arrayParts.length === 1) {
+        const preparedExp = prepareExpression(exp);
+        let i = undefined;
+        safe_1.safe(() => eval('i = object' + preparedExp), undefined);
+        return i;
+    }
+    else {
+        return array_1.flatten(getArrayResultbyExpression(object, arrayParts));
+    }
 }
 exports.getByExpression = getByExpression;
+function getArrayResultbyExpression(object, exps) {
+    if (exps.length === 1) {
+        return getByExpression(object, exps[0]);
+    }
+    const preparedExp = prepareExpression(exps[0]);
+    return getByExpression(object, preparedExp)
+        .map((value) => getArrayResultbyExpression(value, exps.slice(1)));
+}
+exports.getArrayResultbyExpression = getArrayResultbyExpression;
 function setByExpression(object, exp, value) {
     const preparedExp = prepareExpression(exp);
     addMissings(object, preparedExp);

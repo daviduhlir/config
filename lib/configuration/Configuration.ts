@@ -62,7 +62,11 @@ export class Configuration<T extends JsonValidatorObjectChildsSchema> {
      * @param filepaths
      * @returns
      */
-     public static async load<T extends JsonValidatorObjectChildsSchema>(schema: T, filepaths: string[]) {
+    public static async load<T extends JsonValidatorObjectChildsSchema>(
+        schema: T,
+        filepaths: string[],
+        override: Partial<T> = {}
+    ) {
         const instance = new Configuration<T>(schema);
 
         const sources = await Promise.all(filepaths.map(async path => {
@@ -117,6 +121,13 @@ export class Configuration<T extends JsonValidatorObjectChildsSchema> {
      */
     protected load(...sources: Partial<JsonObjectFromSchema<T>>[]) {
         this.internalData = mergeDeep(this.internalData, ...sources) as JsonObjectFromSchema<T>;
+    }
+
+    /**
+     * Override some config values, for example from env
+     */
+    protected override(data: Partial<JsonObjectFromSchema<T>>) {
+        this.internalData = mergeDeep(this.internalData, data) as JsonObjectFromSchema<T>;
     }
 
     /**

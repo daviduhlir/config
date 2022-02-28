@@ -39,7 +39,7 @@ class Configuration {
         this.schema = schema;
         this.internalData = {};
     }
-    static async load(schema, filepaths) {
+    static async load(schema, filepaths, override = {}) {
         const instance = new Configuration(schema);
         const sources = await Promise.all(filepaths.map(async (path) => {
             try {
@@ -49,7 +49,6 @@ class Configuration {
                 throw new ConfigurationError(`Loading configuration from file ${path} failed with error: ${e.message}`);
             }
         }));
-        console.log('Sources', sources);
         instance.load(...sources);
         instance.validate();
         return instance;
@@ -66,6 +65,9 @@ class Configuration {
     }
     load(...sources) {
         this.internalData = object_1.mergeDeep(this.internalData, ...sources);
+    }
+    override(data) {
+        this.internalData = object_1.mergeDeep(this.internalData, data);
     }
     validate() {
         try {
