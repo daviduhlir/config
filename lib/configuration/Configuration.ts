@@ -1,4 +1,3 @@
-import { Proxify } from '../utils/Proxify';
 import {
     JsonValidator,
     JsonValidatorObjectChildsSchema,
@@ -6,7 +5,8 @@ import {
     JsonValidatorAdditionalProperties,
     JsonObjectFromSchema,
     JsonValidationFieldError,
-} from '../utils/JsonValidator';
+    Proxify,
+} from '@david.uhlir/common';
 import { mergeDeep } from '../utils/object'
 import { getByExpression, setByExpression } from '../utils/expression';
 import * as yaml from 'js-yaml';
