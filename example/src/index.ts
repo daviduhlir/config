@@ -1,6 +1,5 @@
-import { WorkerExample } from './WorkerExample';
 import { Configuration } from '@david.uhlir/config'
-import { JsonValidatorType } from '../../dist/utils/JsonValidator'; // TODO get this package from some common
+import { JsonValidatorType } from '@david.uhlir/common'; // TODO get this package from some common
 import * as path from 'path';
 
 (async function() {

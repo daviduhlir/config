@@ -11,7 +11,6 @@
   "author": "David Uhlíř",
   "license": "ISC",
   "dependencies": {
-    "@david.uhlir/cluster": "^1.0.2",
     "@david.uhlir/config": "file:..",
     "rimraf": "^2.6.2",
     "typescript": "^3.8.3"
