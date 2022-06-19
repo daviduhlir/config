@@ -6,9 +6,10 @@ import {
   JsonObjectFromSchema,
   JsonValidationFieldError,
   Proxify,
+  mergeDeep,
+  getByExpression,
+  setByExpression,
 } from '@david.uhlir/common'
-import { mergeDeep } from '../utils/object'
-import { getByExpression, setByExpression } from '../utils/expression'
 import * as yaml from 'js-yaml'
 import * as fs from 'fs'
 

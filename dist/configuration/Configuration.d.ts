@@ -1,4 +1,4 @@
-import { JsonValidatorObjectChildsSchema, JsonObjectFromSchema, JsonValidationFieldError } from '../utils/JsonValidator';
+import { JsonValidatorObjectChildsSchema, JsonObjectFromSchema, JsonValidationFieldError } from '@david.uhlir/common';
 export declare class ConfigurationError extends Error {
     constructor(message: string);
 }

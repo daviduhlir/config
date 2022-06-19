@@ -1,10 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Configuration = exports.ConfigurationValidationError = exports.ConfigurationError = void 0;
-const Proxify_1 = require("../utils/Proxify");
-const JsonValidator_1 = require("../utils/JsonValidator");
-const object_1 = require("../utils/object");
-const expression_1 = require("../utils/expression");
+const common_1 = require("@david.uhlir/common");
 const yaml = require("js-yaml");
 const fs = require("fs");
 class ConfigurationError extends Error {
@@ -15,6 +12,7 @@ class ConfigurationError extends Error {
             Object.setPrototypeOf(this, actualProto);
         }
         else {
+            ;
             this.__proto__ = actualProto;
         }
     }
@@ -23,12 +21,13 @@ exports.ConfigurationError = ConfigurationError;
 class ConfigurationValidationError extends Error {
     constructor(e) {
         super('Configuration is not valid by schema.');
-        this.details = e.details.map((detail) => `${detail.field}${detail.humanKeyName ? `(${detail.humanKeyName})` : ``}: ${detail.message}`);
+        this.details = e.details.map(detail => `${detail.field}${detail.humanKeyName ? `(${detail.humanKeyName})` : ``}: ${detail.message}`);
         const actualProto = new.target.prototype;
         if (Object.setPrototypeOf) {
             Object.setPrototypeOf(this, actualProto);
         }
         else {
+            ;
             this.__proto__ = actualProto;
         }
     }
@@ -54,32 +53,32 @@ class Configuration {
         return instance;
     }
     get data() {
-        return Proxify_1.Proxify.wrap(this.internalData);
+        return common_1.Proxify.wrap(this.internalData);
     }
     get(key) {
-        return expression_1.getByExpression(this.data, key);
+        return common_1.getByExpression(this.data, key);
     }
     set(key, value) {
-        expression_1.setByExpression(this.internalData, key, value);
+        common_1.setByExpression(this.internalData, key, value);
         this.validate();
     }
     load(...sources) {
-        this.internalData = object_1.mergeDeep(this.internalData, ...sources);
+        this.internalData = common_1.mergeDeep(this.internalData, ...sources);
     }
     override(data) {
-        this.internalData = object_1.mergeDeep(this.internalData, data);
+        this.internalData = common_1.mergeDeep(this.internalData, data);
     }
     validate() {
         try {
-            this.internalData = JsonValidator_1.JsonValidator.validate(this.internalData, {
-                type: JsonValidator_1.JsonValidatorType.Object,
-                additinalProperties: JsonValidator_1.JsonValidatorAdditionalProperties.Remove,
+            this.internalData = common_1.JsonValidator.validate(this.internalData, {
+                type: common_1.JsonValidatorType.Object,
+                additinalProperties: common_1.JsonValidatorAdditionalProperties.Remove,
                 childs: this.schema,
             });
         }
         catch (e) {
             this.internalData = null;
-            if (e instanceof JsonValidator_1.JsonValidationFieldError) {
+            if (e instanceof common_1.JsonValidationFieldError) {
                 throw new ConfigurationValidationError(e);
             }
             throw e;
