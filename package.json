@@ -1,6 +1,6 @@
 {
   "name": "@david.uhlir/config",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Configuration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
   "author": "David Uhlíř",
   "license": "ISC",
   "dependencies": {
-    "@david.uhlir/common": "git+https://github.com/daviduhlir/common.git",
+    "@david.uhlir/common": "^1.0.5",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
